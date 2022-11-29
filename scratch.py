@@ -20,6 +20,7 @@ Joints list:
     shoulder_shadow
     waist
 """
+STEP_SIMILARITY_TOLERANCE = 1 * (np.pi / 180.0)
 
 def main():
     bot = InterbotixManipulatorXS("wx250s", "arm", "gripper")
@@ -29,15 +30,30 @@ def main():
     # points = [(-1, 1, 0), (0, -2, 0), (1, 1, -0.005)]
     #points = generate_points(-1.8, 1.8, .599, lambda x: quad(1, 0, 0, x))
 
-    points = generate_points(-1.8, 1.8, .12, lambda x: np.sin(x * 2 * np.pi))
+    points = generate_points(-1.8, 1.8, .1, lambda x: np.sin(x * 1.5 * np.pi))
 
     # points = [(0, 1), (1, 0), (-1, 0)]
     steps = steps_from_points(points)
+    print("Before cleaning: ")
+    for s in steps:
+        print("[{:.2f}".format(s[0]), ", ", "{:.2f}".format(s[1]), "]")
     
-    # starting position
-    bot.arm.set_ee_pose_components(x=0.4, y=0, z=0.18)
+    prev_steps = steps
+    cleaner_steps = clean_steps(prev_steps)
+    # while len(cleaner_steps) < len(prev_steps):
+    #     print(len(cleaner_steps))
+    #     prev_steps = cleaner_steps
+    #     cleaner_steps = clean_steps(cleaner_steps)
 
-    for dy, dx in steps:
+    print("After cleaning: ")
+    for s in cleaner_steps:
+        print("[{:.2f}".format(s[0]), ", ", "{:.2f}".format(s[1]), "]")
+    # starting position
+    bot.arm.set_ee_pose_components(x=0.3, y=0, z=0.26)
+    bot.arm.set_ee_pose_components(x=0.4, y=0, z=0.26)
+    bot.arm.set_ee_pose_components(x=0.4, y=0, z=0.21)
+
+    for dy, dx in cleaner_steps:
         print(dy, dx)
         dy_scale = dy / SCALE
         dx_scale = dx / SCALE
@@ -48,6 +64,7 @@ def main():
         # and the ee path is not guaranteed to be a straight line
         bot.arm.set_ee_cartesian_trajectory(dx_scale, dy_scale, 0)
     
+    bot.arm.set_ee_cartesian_trajectory(0, 0, 0.1)
     bot.gripper.set_pressure(0)
     bot.gripper.open()
     bot.arm.go_to_sleep_pose()
@@ -103,6 +120,27 @@ def steps_from_points(points):
         result.append((point[0] - prev[0], point[1] - prev[1]))
         prev = point
     return result
+
+def clean_steps(steps):
+    result = []
+    first_step_index = 0
+    while first_step_index < len(steps) - 1:
+        first_step = steps[first_step_index]
+        next_step = steps[first_step_index + 1]
+        # if curr_step is almost in the same direction as previous step, 
+        # combine into one big step
+        if (angle_between_steps(first_step, next_step)) < STEP_SIMILARITY_TOLERANCE:
+            result.append((first_step[0] + next_step[0], first_step[1] + next_step[1]))
+            first_step_index += 2
+        else:
+            result.append(first_step)
+            first_step_index += 1 
+    return result
+
+def angle_between_steps(step_1, step_2):
+    v1_u = step_1 / np.linalg.norm(step_1)
+    v2_u = step_2 / np.linalg.norm(step_2)
+    return np.arccos(np.clip(np.dot(v1_u, v2_u), -1.0, 1.0))
 
 if __name__=='__main__':
     main()
