@@ -1,5 +1,6 @@
 from interbotix_xs_modules.arm import InterbotixManipulatorXS
 import numpy as np
+import matplotlib.pyplot as plt
 
 """
 Launch command:
@@ -25,13 +26,23 @@ STEP_SIMILARITY_TOLERANCE = 1 * (np.pi / 180.0)
 def main():
     bot = InterbotixManipulatorXS("wx250s", "arm", "gripper")
     SCALE = 30
-    grab_pen(bot)
+
 
     # points = [(-1, 1, 0), (0, -2, 0), (1, 1, -0.005)]
     #points = generate_points(-1.8, 1.8, .599, lambda x: quad(1, 0, 0, x))
 
-    points = generate_points(-1.8, 1.8, .1, lambda x: np.sin(x * 1.5 * np.pi))
+    # Parabola
+    #points = generate_points(-1.3, 1.3, .2, lambda x: quad(1.2, 0, 0, x))
 
+    # Sine Wave
+    points = generate_points(-np.pi / 2, np.pi / 2, .1, lambda x: np.sin(x * 1.5 * np.pi))
+
+    # Heart
+    #points = generate_heart_points()
+
+    plt.plot([pt[0] for pt in points], [pt[1] for pt in points], 'o', color='black')
+    plt.savefig("graph.png")
+    
     # points = [(0, 1), (1, 0), (-1, 0)]
     steps = steps_from_points(points)
     print("Before cleaning: ")
@@ -48,12 +59,18 @@ def main():
     print("After cleaning: ")
     for s in cleaner_steps:
         print("[{:.2f}".format(s[0]), ", ", "{:.2f}".format(s[1]), "]")
+
+    grab_pen(bot)
+
     # starting position
     bot.arm.set_ee_pose_components(x=0.3, y=0, z=0.26)
-    bot.arm.set_ee_pose_components(x=0.4, y=0, z=0.26)
-    bot.arm.set_ee_pose_components(x=0.4, y=0, z=0.21)
+    bot.arm.set_ee_pose_components(x=0.38, y=0, z=0.26)
+    bot.arm.set_ee_pose_components(x=0.38, y=0, z=0.21)
 
-    for dy, dx in cleaner_steps:
+    _ = input("Give the robot the pen. Press Enter to continue...")
+
+
+    for dy, dx in steps:
         print(dy, dx)
         dy_scale = dy / SCALE
         dx_scale = dx / SCALE
@@ -65,9 +82,28 @@ def main():
         bot.arm.set_ee_cartesian_trajectory(dx_scale, dy_scale, 0)
     
     bot.arm.set_ee_cartesian_trajectory(0, 0, 0.1)
+
+    _ = input("Take the pen from the robot, it can't be trusted. Press Enter to continue...")
+
     bot.gripper.set_pressure(0)
     bot.gripper.open()
     bot.arm.go_to_sleep_pose()
+
+# def get_params():
+#     start = float(input("Enter start of domain."))
+#     end = float(input("Enter end of domain."))
+#     step = float(input("Enter domain step size."))
+
+#     func_name = input("Enter function name")
+#     if func_name == "sine":
+#         amplitude = input("Enter amplitude")
+#         period
+#     elif func_name == "quadratic":
+#         pass
+#     else:
+#         raise NameError("Invalid function name")
+
+#     return start, end, step, func
     
 
 """UTILS"""
@@ -105,10 +141,20 @@ def generate_points(s, l, step, function):
     Generate points from the given function with step between x
     """
     ans = []
-    for x in np.arange(s, l, step):
+    for x in np.linspace(s, l, ((l - s) / step)):
         ans.append((x, function(x)))
 
     return ans
+
+def generate_heart_points():
+    HEART_SCALE = 10
+    t = np.linspace(0, 2 * np.pi, 30)
+    x = 16 * np.power(np.sin(t), 3)
+    y = 13 * np.cos(t) - 5 * np.cos(2 * t) - 2 * np.cos(3 * t) - np.cos(4*t)
+
+    x = x / HEART_SCALE
+    y = y / HEART_SCALE
+    return list(zip(x, y))
 
 def steps_from_points(points):
     """
