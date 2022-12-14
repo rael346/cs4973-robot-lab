@@ -8,6 +8,12 @@ The goal of the robot is to graph a given function using pen and paper in its ha
 
 To run the program, use "python robot_graphing.py [SHAPE]" where SHAPE is either 'sine', 'parabola', or 'heart' to specify the desired function.
 
+
+
+https://user-images.githubusercontent.com/38445583/207697561-b69bbab9-77f8-4afa-a94e-c3c3fff530fa.mp4
+
+
+
 ## How it Works
 
 Human participation is involved in the robot drawing workflow, specifically to give and take away the pen as well as setting up the paper for it to draw on. The program will print instructions to the terminal and pause to allow the human to complete them before the robot takes further actions.
