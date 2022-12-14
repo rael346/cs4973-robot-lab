@@ -4,11 +4,11 @@
 
 Team: Ziggy Stardust (Duy Tran, William Cutler, Sam Ji)
 
-The goal of the robot is to graph a given function using pen and paper in its hand.
+The goal of the robot is to graph a given function using pen and paper in its hand. We use an Interbotix WX250s robotic arm https://www.trossenrobotics.com/widowx-250-robot-arm.aspx.
 
 To run the program, use "python robot_graphing.py [SHAPE]" where SHAPE is either 'sine', 'parabola', or 'heart' to specify the desired function.
 
-
+## Video of Robot Arm Drawing Sine Wave
 
 https://user-images.githubusercontent.com/38445583/207697561-b69bbab9-77f8-4afa-a94e-c3c3fff530fa.mp4
 
